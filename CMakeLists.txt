@@ -2,7 +2,22 @@ cmake_minimum_required(VERSION 3.12)
 project(image_stabilizer)
 
 set(CMAKE_CXX_STANDARD 11)
+######
+# CROSS TOOL CHAIN
 
+# Set the target architecture for cross-compilation
+# set(CMAKE_SYSTEM_NAME Linux)
+# set(CMAKE_SYSTEM_PROCESSOR arm)
+
+# # Set the cross-compilation toolchain file
+# set(CMAKE_C_COMPILER "path/to/your/cross-compiler/arm-linux-gnueabihf-gcc")
+# set(CMAKE_CXX_COMPILER "path/to/your/cross-compiler/arm-linux-gnueabihf-g++")
+# set(CMAKE_FIND_ROOT_PATH "path/to/your/sysroot")
+
+# # Set the output directory for the compiled binary
+# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+#####
 # Find and include OpenCV
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})

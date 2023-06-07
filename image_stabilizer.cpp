@@ -70,6 +70,7 @@ cv::Mat stabilizeImage_for_gyros(cv::Mat& frame, const cv::Vec3f& gyro_data)
     return stabilized_frame;
 }
 
+
 cv::Mat stabilizeImage_single_frame(cv::Mat& frame, const cv::Vec3f& gyro_data)
 {
     // Convert current frame to grayscale
@@ -84,15 +85,48 @@ cv::Mat stabilizeImage_single_frame(cv::Mat& frame, const cv::Vec3f& gyro_data)
 
     cv::Mat transformed_frame;
     cv::warpAffine(frame, transformed_frame, M, frame.size());
+    cv::cvtColor(transformed_frame, transformed_frame, cv::COLOR_BGR2GRAY);
+
+    // Resize the grayscale frame to match the dimensions of transformed_frame
+    cv::resize(gray, gray, transformed_frame.size());
+
+    // Check if the grayscale frames have the same dimensions
+    if (gray.size() != transformed_frame.size()) {
+        std::cerr << "Frame dimensions do not match" << std::endl;
+        return cv::Mat();
+    }
 
     // Perform image stabilization using frame differencing
     cv::Mat diff;
     cv::absdiff(gray, transformed_frame, diff);
-    cv::Mat stabilized_frame;
-    cv::addWeighted(frame, 1.5, transformed_frame, -0.5, 0, stabilized_frame);
+
+    // Resize the original frame to match the size of transformed_frame
+    cv::resize(frame, frame, transformed_frame.size());
+    // std::cout<< "come here" <<std::endl;
+    if (!frame.empty()) {
+        int rows = frame.rows;
+        int cols = frame.cols;
+        int channels = frame.channels();
+
+        std::cout << "Image shape: " << rows << " rows x " << cols << " columns x " << channels << " channels" << std::endl;
+    }
+    if (!transformed_frame.empty()) {
+        int rows = transformed_frame.rows;
+        int cols = transformed_frame.cols;
+        int channels = transformed_frame.channels();
+
+        std::cout << "Image shape: " << rows << " rows x " << cols << " columns x " << channels << " channels" << std::endl;
+    }
+    
+    // Apply weighted addition to stabilize the frame
+    // cv::Mat stabilized_frame;
+    cv::Mat stabilized_frame = cv::Mat::zeros(frame.size(), frame.type());
+    cv::addWeighted(gray, 1.5, transformed_frame, -0.5, 0, stabilized_frame);
+
 
     return stabilized_frame;
 }
+
 
 
 int main()
@@ -102,11 +136,13 @@ int main()
     IIO_IMU imu("/sys/bus/iio/devices/iio:device0");
 
     // Initialize the IMU
+    
     if (!imu.initialize()) {
         std::cout << "Failed to initialize IMU." << std::endl;
         return 1;
     }
-    imu.enableSensorFusionAlgorithm();
+    // imu.enableSensorFusionAlgorithm();
+    
     ///////////////////////////
     //thread 1 to capture image
     // Open the video capture device
@@ -115,8 +151,16 @@ int main()
         std::cerr << "Failed to open video capture device" << std::endl;
         return -1;
     }
+
     // Read the first frame to initialize variables
     cv::Mat frame;
+    //for testing purpose
+    // frame = cv::imread("1.jpeg", cv::IMREAD_COLOR);
+    // if (frame.empty()) {
+    //     std::cerr << "Failed to read image" << std::endl;
+    //     return -1;
+    // }
+    
     cap.read(frame);
  
     if (frame.empty()) {
@@ -127,17 +171,17 @@ int main()
     cv::Vec3f gyro_data(3) ;
     cv::Vec3f acc_data(3) ;
     readImuData(imu,gyro_data,acc_data);
-
+    //fake gyros data for testing
+    // gyro_data[0]= 11;
+    // gyro_data[1]= 1;
+    // gyro_data[2]= 2;
     // Apply image stabilization using EIS algorithm
     cv::Mat stabilized_frame = stabilizeImage_single_frame(frame, gyro_data);
 
     // Display stabilized frame
     cv::imwrite("Stabilized_img.jpg", stabilized_frame);
     cv::imwrite("origin_img.jpg", frame);
-
-    // Join the threads
-    // imuThread.join();
-    // cameraThread.join();
+  
     // Release resources
     cap.release();
     // Close the IMU

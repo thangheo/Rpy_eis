@@ -8,12 +8,16 @@ The Linux kernel on the Raspberry Pi already supports the IIO driver for LSM6DSX
 The idea is not new, as the Raspberry Pi board captures the image simultaneously with the IMU. The captured data is then used for the image stabilization process, with the expectation of reducing blurring in the output image. It should be noted that this implementation is simplified, and the main challenge lies in synchronizing the IMU data with the captured image in terms of timing.
 
 This code focuses on single-frame EIS and does not handle multiple frames.
-=====================
+
+
 In order to use this code you need to config the correct IIO device in main function,
 you also need the proper kernel which support iio for this imu
+
 =====================
+
 HOW TO BUILD
-for get about bazel build it doesnt work yet
+for get about bazel build it doesnt work yet. 
+To run this code on Raperry Pi you need to cross compile with rasperry pi toolchain
 1. you need to install opencv first
 https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html
 2. you need libiio 
